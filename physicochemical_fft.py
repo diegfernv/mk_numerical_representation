@@ -270,6 +270,9 @@ if __name__ == "__main__":
     )
     physicochemical_instance.run_process()
 
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
+
     physicochemical_instance.df_data_encoded.to_csv("{}/physicochemical_{}.csv".format(args.output, args.property), index=False)
 
     fft_instance = FFTTransform(
