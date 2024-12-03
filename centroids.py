@@ -41,6 +41,6 @@ if __name__ == "__main__":
         results.append([file.split(".")[0], "tsne", distance[0]])
 
     df_results = pd.DataFrame(results, columns=["encoding", "method", "distance"])
-    df_results.to_csv(f"{args.output}/{args.name}.csv", index=False)
+    df_results.to_csv(f"{args.output}/{args.name}", index=False)
 
 

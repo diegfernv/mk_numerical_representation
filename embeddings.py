@@ -61,10 +61,10 @@ if __name__ == "__main__":
     header = [f"p_{i+1}" for i in range(len(embeddings_matrix[0]))]
     
     df_embedding = pd.DataFrame(data=embeddings_matrix, columns=header)
-    df_embedding[args.response] = list_labels
+    df_embedding["response"] = list_labels
     
-    command = f"mkdir -p {args.output}{name_model}"
-    os.system(command)
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
     
     df_embedding.to_csv(f"{args.output}/{args.name}", index=False)
     

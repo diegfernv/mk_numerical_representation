@@ -34,6 +34,14 @@ class Models():
             predictions.append((name, model.predict(X_val)))
         
         return predictions
+
+    def predict_proba(self, X_val):
+        predictions = []
+
+        for name, model in self.algorithms:
+            predictions.append((name, model.predict_proba(X_val)[::,1]))
+        
+        return predictions
     
     def cross_validate_model(self, name, model, X, y, cv, scoring):
         res = cross_validate(model, X, y, cv=cv, scoring=scoring)
@@ -88,13 +96,13 @@ if __name__ == "__main__":
     metrics_val = models_instance.get_metrics(X_val, y_val)
     metrics_test = models_instance.get_metrics(X_test, y_test)
     metrics = pd.merge(metrics_val, metrics_test, on="algorithm", suffixes=("_val", "_test"))
-    metrics["encoding"] = args.input.split(".")[0]
+    metrics["encoding"] = args.input.split(".")[0].split("/")[-1]
 
     if not os.path.exists(args.output):
         os.makedirs(args.output)
 
-    if os.path.exists(f"{args.output}/{args.name}"):
-        output_df = pd.read_csv(f"{args.output}/{args.name}")
+    if os.path.exists(f"{args.output}/{args.name}_val_test.csv"):
+        output_df = pd.read_csv(f"{args.output}/{args.name}_val_test.csv")
         output_df = pd.concat([output_df, metrics], axis=0)
     else:
         output_df = metrics
@@ -111,9 +119,10 @@ if __name__ == "__main__":
 
     print("Cross validating")
     cv_metrics = models_instance.cross_validate(X_train, y_train, cv=5, scoring=scoring)
+    cv_metrics["encoding"] = args.input.split(".")[0].split("/")[-1]
 
-    if os.path.exists(f"{args.output}/{args.name}"):
-        output_df = pd.read_csv(f"{args.output}/{args.name}")
+    if os.path.exists(f"{args.output}/{args.name}_cv.csv"):
+        output_df = pd.read_csv(f"{args.output}/{args.name}_cv.csv")
         output_df = pd.concat([output_df, cv_metrics], axis=0)
     else:
         output_df = cv_metrics
