@@ -6,6 +6,23 @@ from scipy.spatial.distance import pdist, squareform
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+
+def plot_pca(score, coeff, labels=None):
+    xs = score[:, 0]
+    ys = score[:, 1]
+    n = coeff.shape[0]
+    scalex = 1.0 / (xs.max() - xs.min())
+    scaley = 1.0 / (ys.max() - ys.min())
+    plt.figure(figsize=[20, 20])
+    plt.scatter(xs * scalex, ys * scaley, s=5)
+    for i in range(n):
+        plt.arrow(0,0, coeff[i,0], coeff[i,1], color='r', alpha=0.5)
+        if labels is None:
+            plt.text(coeff[i,0] * 1.15, coeff[i, 1] * 1.15, "Var" + str(i+1), color='green', ha='center', va='center')
+    plt.xlabel("PC{}".format(1))
+    plt.ylabel("PC{}".format(2))
+    plt.grid()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -40,3 +57,17 @@ if __name__ == "__main__":
 
     fig = sns.scatterplot(data=df_tsne, x="tsne_1", y="tsne_2", hue="response")
     plt.savefig(f"{args.output}/{args.name}_tsne.png")
+
+    #Varianza explicada
+
+    plt.bar(range(1, len(pca.explained_variance_) + 1), pca.explained_variance_)
+    plt.ylabel('Varianza explicada')
+    plt.xlabel('Componentes principales')
+    plt.plot(range(1, len(pca.explained_variance_) + 1), np.cumsum(pca.explained_variance_),
+            c='red', label="Varianza explicada acumulada")
+    plt.legend(loc='upper left')
+
+    plt.savefig(f"{args.output}/{args.name}_variance.png")
+
+    plot_pca(pca_transform[:, :2], np.transpose(pca.components_[0:2, :]), labels=None)
+    plt.savefig(f"{args.output}/{args.name}_pca_components.png")

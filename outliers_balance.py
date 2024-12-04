@@ -1,5 +1,6 @@
 import pandas as pd 
 from sklearn.utils import shuffle
+from scipy.stats import zscore
 import argparse, os
 
 if __name__ == "__main__":
@@ -7,10 +8,20 @@ if __name__ == "__main__":
     parser.add_argument("-i","--input", type=str, help="Input file")
     parser.add_argument("-o","--output", type=str, help="Output path")
     parser.add_argument("-n","--name", type=str, help="File name")
+    parser.add_argument("-r","--response", type=str, help="Response column", default="response")
+    parser.add_argument("-s", "--sequence", help="Sequence column", required=True)
     args = parser.parse_args()
 
     df = pd.read_csv(args.input)
+    df = df[[args.sequence, args.response]]
+    df.rename(columns={args.sequence: "sequence", args.response: "response"}, inplace=True)
 
+    df["length"] = df["sequence"].apply(lambda x: len(x))
+    # Remove outliers
+    df["zscore"] = zscore(df["length"])
+    df = df[abs(df["zscore"]) <= 3]
+    
+    # Balance data
     df_pos = df[df["response"] == 1]
     df_neg = df[df["response"] == 0]
 
