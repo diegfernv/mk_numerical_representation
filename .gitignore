@@ -163,3 +163,5 @@ cython_debug/
 *.md
 *.csv
 *.png
+*.json
+*.tar.gz
