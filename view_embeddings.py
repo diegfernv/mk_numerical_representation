@@ -25,49 +25,71 @@ def plot_pca(score, coeff, labels=None):
     plt.grid()
 
 if __name__ == "__main__":
+    # Set up argument parser
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i","--input", type=str, help="Input file with embeddings")
-    parser.add_argument("-o","--output", type=str, help="Output path")
-    parser.add_argument("-n","--name", type=str, help="File name")
+    parser.add_argument("-i", "--input", type=str, required=True, help="Input file with embeddings")
+    parser.add_argument("-o", "--output", type=str, required=True, help="Output path")
+    parser.add_argument("-n", "--name", type=str, required=True, help="File name")
     args = parser.parse_args()
-    
+
+    # Read input CSV
     df = pd.read_csv(args.input)
 
+    # Filter positive and negative responses
     df_pos = df[df["response"] == 1]
     df_neg = df[df["response"] == 0]
     df_balanced = pd.concat([df_pos, df_neg], axis=0)
 
+    # Prepare data for PCA and t-SNE
     df_values = df_balanced.drop(columns=["response"]).values
+
+    # Perform PCA
     pca = PCA(n_components=2, random_state=42)
     pca.fit(df_values)
     pca_transform = pca.transform(df_values)
 
+    # Create DataFrame for PCA results
     df_pca = pd.DataFrame(pca_transform, columns=["pca_1", "pca_2"])
     df_pca["response"] = df_balanced["response"].values
 
-    if not os.path.exists(args.output):
-        os.makedirs(args.output)
+    # Ensure output directory exists
+    os.makedirs(args.output, exist_ok=True)
 
-    fig = sns.scatterplot(data=df_pca, x="pca_1", y="pca_2", hue="response")
+    # Plot PCA scatterplot
+    plt.figure()
+    sns.scatterplot(data=df_pca, x="pca_1", y="pca_2", hue="response")
     plt.savefig(f"{args.output}/{args.name}_pca.png")
+    plt.clf()
 
+    # Perform t-SNE
     tsne = TSNE(n_components=2, random_state=42, perplexity=5).fit_transform(df_values)
+
+    # Create DataFrame for t-SNE results
     df_tsne = pd.DataFrame(tsne, columns=["tsne_1", "tsne_2"])
     df_tsne["response"] = df_balanced["response"].values
 
-    fig = sns.scatterplot(data=df_tsne, x="tsne_1", y="tsne_2", hue="response")
+    # Plot t-SNE scatterplot
+    plt.figure()
+    sns.scatterplot(data=df_tsne, x="tsne_1", y="tsne_2", hue="response")
     plt.savefig(f"{args.output}/{args.name}_tsne.png")
+    plt.clf()
 
-    #Varianza explicada
-
+    # Plot explained variance for PCA
+    plt.figure()
     plt.bar(range(1, len(pca.explained_variance_) + 1), pca.explained_variance_)
-    plt.ylabel('Varianza explicada')
-    plt.xlabel('Componentes principales')
+    plt.ylabel('Explained Variance')
+    plt.xlabel('Principal Components')
     plt.plot(range(1, len(pca.explained_variance_) + 1), np.cumsum(pca.explained_variance_),
-            c='red', label="Varianza explicada acumulada")
+             c='red', label="Cumulative Explained Variance")
     plt.legend(loc='upper left')
-
     plt.savefig(f"{args.output}/{args.name}_variance.png")
+    plt.clf()
 
+    # Plot PCA components
+    pca = PCA(n_components=5, random_state=42)
+    pca.fit(df_values)
+    pca_transform = pca.transform(df_values)
+    plt.figure()
     plot_pca(pca_transform[:, :2], np.transpose(pca.components_[0:2, :]), labels=None)
     plt.savefig(f"{args.output}/{args.name}_pca_components.png")
+    plt.clf()
